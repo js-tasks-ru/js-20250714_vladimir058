@@ -6,7 +6,7 @@
  */
 export function trimSymbols(string, size) {
   if (typeof string !== "string") {
-    return undefined;
+    return;
   }
   if (typeof size == "undefined") {
     return string;
