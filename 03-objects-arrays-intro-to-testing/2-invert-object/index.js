@@ -5,7 +5,7 @@
  */
 export function invertObj(obj) {
   if (typeof obj !== "object") {
-    return undefined;
+    return;
   }
 
   const invArray = {};
