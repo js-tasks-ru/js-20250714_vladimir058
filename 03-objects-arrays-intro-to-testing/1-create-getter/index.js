@@ -8,14 +8,13 @@ export function createGetter(path) {
 
   return (object) => {
     let result = object;
-    for (let key of keys) {
+    for (const key of keys) {
       if (
         !result ||
         typeof result !== "object" ||
         !Object.getOwnPropertyNames(result).includes(key)
-        //!(key in result)
       ) {
-        return undefined;
+        return;
       }
       result = result[key];
     }
