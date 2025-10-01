@@ -1,95 +1,91 @@
 export default class ColumnChart {
+  element;
   chartHeight = 50;
   constructor({
     data = [], // данные
     label = "", // Название диаграммы
     value = 0, // Общее значение диаграммы
     link = "", // Ссылка
-    formatHeading = null, //Формат заголовка
+    formatHeading = (value) => value, //Формат заголовка
   } = {}) {
     this.data = data;
     this.label = label;
     this.value = value;
     this.link = link;
-    this.formatHeading = formatHeading || ((val) => val);
+    this.formatHeading = formatHeading;
 
-    this.element = document.createElement("div");
-    // eslint-disable-next-line no-unused-expressions
-    this.element.classList.add("column-chart");
-    if (!this.data.length) {
-      this.element.classList.add("column-chart_loading");
-    }
-    this.element.style = "--chart-height: 50px";
-
-    this.render();
+    this.element = this.createElement();
   }
 
-  render() {
-    // Заголовок
-    const title = document.createElement("div");
-    title.classList.add("column-chart__title");
-    title.textContent = this.label;
-    if (this.link) {
-      const linkEl = document.createElement("div");
-      linkEl.href = this.link;
-      linkEl.classList.add("column-chart__link");
-      linkEl.textContent = "View all";
-      title.append(linkEl);
+  createLinkTemplate() {
+    return this.link
+      ? `<a href=${this.link} class="column-chart__link">View all</a>`
+      : ``;
+  }
+
+  getColumnProps(data) {
+    const maxValue = Math.max(...data);
+    const scale = 50 / maxValue;
+
+    return data.map((item) => {
+      return {
+        percent: ((item / maxValue) * 100).toFixed(0) + "%",
+        value: String(Math.floor(item * scale)),
+      };
+    });
+  }
+
+  createChartTemplate() {
+    return this.getColumnProps(this.data)
+      .map(
+        ({
+          percent,
+          value,
+        }) => `<div style="--value: ${value}" data-tooltip=${percent}></div>
+    `
+      )
+      .join("");
+  }
+  createTemplate() {
+    return `
+    <div class="column-chart" style="--chart-height: 50">
+      <div class="column-chart__title">
+        ${this.label}
+        ${this.createLinkTemplate()}
+      </div>
+      <div class="column-chart__container">
+        <div data-element="header" class="column-chart__header">
+        ${this.formatHeading(this.value)}
+        </div>
+        <div data-element="body" class="column-chart__chart">
+          ${this.createChartTemplate()}
+        </div>
+      </div>
+    </div>
+    `;
+  }
+
+  createElement() {
+    const element = document.createElement("div");
+    element.innerHTML = this.createTemplate();
+    const firstElementChild = element.firstElementChild;
+    if (!this.data.length) {
+      firstElementChild.classList.add("column-chart_loading");
     }
-    this.element.append(title);
-
-    //Контейнер
-    const container = document.createElement("div");
-    container.classList.add("column-chart__container");
-
-    const containerHeader = document.createElement("div");
-    containerHeader.classList.add("column-chart__header");
-    containerHeader.textContent = this.formatHeading(String(this.value));
-
-    const containerBody = document.createElement("div");
-    containerBody.classList.add("column-chart__chart");
-    containerBody.dataset.element = "body";
-
-    //рисуем столбцы графика
-    if (this.data && this.data.length > 0) {
-      const maxValue = Math.max(...this.data.map((el) => el));
-
-      for (const item of this.data) {
-        const column = document.createElement("div");
-
-        const columnHeightCalc = ((item / maxValue) * 100).toFixed(0);
-        column.style.setProperty(
-          "--value",
-          String(Math.floor((item * this.chartHeight) / maxValue))
-        );
-        column.dataset.tooltip = `${columnHeightCalc}%`;
-        containerBody.append(column);
-      }
-    } else {
-      //отображаем заглушку
-      const templateLoading = document.createElement("img");
-      templateLoading.src = "./charts-skeleton.svg";
-      templateLoading.classList.add("column-chart_loading");
-      this.element.append(templateLoading);
-    }
-
-    container.append(containerHeader);
-    container.append(containerBody);
-
-    this.element.append(title);
-    this.element.append(container);
+    return firstElementChild;
   }
 
   update(newData) {
     this.data = newData;
-    this.render(); // Перерисовываем после обновления данных
+    this.element.innerHTML = this.createTemplate();
   }
-  //вообще в ТЗ не вижу что это нужно сделать, потому буду гадать на кофейной гуще)
+
   remove() {
     if (this.element) {
       this.element.remove();
     }
   }
+
   destroy() {
     this.element.remove();
   }
