@@ -1,5 +1,7 @@
 export default class NotificationMessage {
-  constructor(message, options = {}) {
+  static lastShownComponent = null;
+
+  constructor(message = "", options = {}) {
     this.message = message;
     this.duration = options.duration || 2000;
     this.type = options.type || "success";
@@ -30,10 +32,10 @@ export default class NotificationMessage {
   }
 
   show(targetElement = document.body) {
-    const existingNotifications = document.querySelectorAll(".notification");
-    for (let i = 0; i < existingNotifications.length; i++) {
-      existingNotifications[i].parentNode.removeChild(existingNotifications[i]);
+    if (NotificationMessage.lastShownComponent) {
+      NotificationMessage.lastShownComponent.destroy();
     }
+    NotificationMessage.lastShownComponent = this;
 
     targetElement.appendChild(this.element);
 
@@ -50,11 +52,8 @@ export default class NotificationMessage {
   }
 
   destroy() {
+    clearTimeout(this.timer);
     this.remove();
-
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
+    NotificationMessage.lastShownComponent = null;
   }
 }
